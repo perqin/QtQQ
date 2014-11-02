@@ -1,4 +1,5 @@
 QtQQ
 ====
 
-Qt QQ for Symbian and Meego, developed by the 3rd-party individual.
+在Symbian和Meego平台上的QQ，使用Qt和QML开发，非官方版本。
+目前仅Symbian1处于开发中。
