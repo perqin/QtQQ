@@ -335,11 +335,8 @@ QQItemInfo::QQItemInfo(QQItemInfo::QQItemType type, QObject *parent):
     
     queue_chatRecords = new ChatMessageInfoList(this);
     
-    connect (this, &QQItemInfo::settingsChanged, this, &QQItemInfo::avatar40Changed);
-    connect (this, &QQItemInfo::settingsChanged, this, &QQItemInfo::avatar240Changed);
-    connect (this, &QQItemInfo::nickChanged, this, &QQItemInfo::updataAliasOrNick);
-    connect (this, &QQItemInfo::aliasChanged, this, &QQItemInfo::updataAliasOrNick);
-    connect (this, &QQItemInfo::isActiveChatPageChanged, this, &QQItemInfo::clearUnreadMessages);
+    connect (this, SIGNAL(settingsChanged()), SIGNAL(avatar40Changed()));
+    connect (this, SIGNAL(settingsChanged()), SIGNAL(avatar240Changed()));
     
     typeString = typeToString (type);
 }
@@ -488,6 +485,7 @@ void QQItemInfo::setNick(QString arg)
     if (m_nick != arg) {
         m_nick = arg;
         emit nickChanged ();
+        updataAliasOrNick();
     }
 }
 
@@ -496,6 +494,7 @@ void QQItemInfo::setAlias(QString arg)
     if(m_alias!=arg){
         m_alias = arg;
         emit aliasChanged();
+        updataAliasOrNick();
     }
 }
 
@@ -587,6 +586,8 @@ void QQItemInfo::setIsActiveChatPage(bool arg)
 {
     if (m_isActiveChatPage != arg) {
         m_isActiveChatPage = arg;
+        if(arg)
+            clearUnreadMessages();//清除未读消息
         emit isActiveChatPageChanged(arg);
     }
 }
@@ -622,7 +623,7 @@ FriendInfo::FriendInfo(QObject *parent):
     max_chatMessage_count=150;//最大缓存消息数量
     saveRecord_coount=50;//一次将50条消息记录插入到本地（不能大于max_chatMessage_count）
     
-    connect (this, &QQItemInfo::settingsChanged, this, &FriendInfo::onSettingsChanged);
+    connect (this, SIGNAL(settingsChanged()), SLOT(onSettingsChanged()));
     //链接信号，处理settings对象改变的信号
     getChatRecordsing=false;//记录现在是否在请求获取聊天记录
     itemInfoPrivate = DatabaseOperation::createDatabaseOperation ();

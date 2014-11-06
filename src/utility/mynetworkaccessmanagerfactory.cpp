@@ -38,7 +38,7 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
     QSslConfiguration config;
 
     config.setPeerVerifyMode(QSslSocket::VerifyNone);
-    config.setProtocol(QSsl::TlsV1_0);
+    config.setProtocol(QSsl::TlsV1);
     req.setSslConfiguration(config);
     // set user-agent
     if (op == PostOperation){

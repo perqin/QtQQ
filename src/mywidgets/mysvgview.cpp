@@ -1,10 +1,9 @@
 #include "mysvgview.h"
 #include <QPainter>
-#include <QQuickWindow>
 #include <QDebug>
 
-MySvgView::MySvgView(QQuickItem *parent) :
-    QQuickPaintedItem(parent)
+MySvgView::MySvgView(QDeclarativeItem *parent) :
+    QDeclarativeItem(parent)
 {
     m_defaultSize = QSize(0,0);
     svg = new QSvgRenderer(this);
@@ -50,19 +49,18 @@ void MySvgView::setSource(QUrl arg)
     if (m_source != arg) {
         m_source = arg;
         QString str;
-        if(arg.isLocalFile ())
-            str = arg.toLocalFile ();
-        else
-            str = arg.toString ();
+        str = arg.toString ();
+
         if( str.mid (0, 3) == "qrc")
             str = str.mid (3, str.count ()-3);
         svg->load (str);
         setDefaultSize (svg->defaultSize ());
         int temp1 = svg->defaultSize ().width ();
         int temp2 = svg->defaultSize ().height ();
-        if(width ()==0&&height ()==0)
-            setImplicitSize (temp1, temp2);//设置大小为默认大小
-        else if(width()!=0)
+        if(width ()==0&&height ()==0){
+            setImplicitWidth(temp1);//设置大小为默认大小
+            setImplicitHeight(temp2);
+        }else if(width()!=0)
             onWidthChanged();
         else if(height ()!=0)
             onHeightChanged ();

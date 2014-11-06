@@ -1,15 +1,18 @@
 #include "utility.h"
 #include <QDebug>
-#include <QtConcurrent>
+#include <QtCore>
 #include <QApplication>
+#include <QtDeclarative>
 #include "mynetworkaccessmanagerfactory.h"
 #include "downloadimage.h"
 #include "myhttprequest.h"
 
+static Utility* my_utility=NULL;
 Utility *Utility::createUtilityClass()
 {
-    static Utility my_utility;
-    return &my_utility;
+    if(my_utility==NULL)
+        my_utility = new Utility();
+    return my_utility;
 }
 
 Utility::Utility(QObject *parent) :
@@ -19,18 +22,8 @@ Utility::Utility(QObject *parent) :
 
     http_request = new MyHttpRequest(this);
     download_image = new DownloadImage(this);
-    old_pos = QPoint(-1,-1);
     
-    mouse_timer = new QTimer(this);
-    connect (mouse_timer, SIGNAL(timeout()), SLOT(emitDesktopPosChanged()));//连接定时器
-    mouse_timer->start (20);//启动定时器，用来定时判断鼠标位置是否改变
-    
-    connect (&networkConfigurationManager, &QNetworkConfigurationManager::onlineStateChanged,
-             this, &Utility::networkOnlineStateChanged);
-}
-
-Utility::~Utility()
-{
+    //connect (networkConfigurationManager, SIGNAL(onlineStateChanged(bool)), SLOT(networkOnlineStateChanged(bool)));
 }
 
 char Utility::numToStr(int num)
@@ -97,18 +90,9 @@ QByteArray Utility::fillContent(const QByteArray &str, int length)
     }
 }
 
-void Utility::emitDesktopPosChanged()
-{
-    QPoint temp = QCursor::pos ();
-    if( old_pos!= temp){
-        old_pos = temp;
-        emit mouseDesktopPosChanged (temp);
-    }
-}
-
 void Utility::consoleLog(QString str)
 {
-    qDebug()<<"c++:"+str;
+    qDebug()<<"c++:"<<str;
 }
 
 QString Utility::getCookie(QString cookieName)
@@ -121,7 +105,7 @@ QString Utility::getCookie(QString cookieName)
     return "";
 }
 
-QQmlApplicationEngine *Utility::qmlEngine()
+QDeclarativeEngine *Utility::qmlEngine()
 {
     return engine;
 }
@@ -141,7 +125,7 @@ bool Utility::networkIsOnline() const
     return networkConfigurationManager.isOnline ();
 }
 
-void Utility::setQmlEngine(QQmlApplicationEngine *new_engine)
+void Utility::setQmlEngine(QDeclarativeEngine *new_engine)
 {
     engine = new_engine;
     if(engine){
@@ -149,7 +133,7 @@ void Utility::setQmlEngine(QQmlApplicationEngine *new_engine)
     }
 }
 
-void Utility::initUtility(QSettings *settings, QQmlApplicationEngine *qmlEngine)
+void Utility::initUtility(QSettings *settings, QDeclarativeEngine *qmlEngine)
 {
     setQSettings (settings);
     setQmlEngine (qmlEngine);
@@ -192,13 +176,7 @@ void Utility::removeValue(const QString &key)
         qDebug()<<"mysetting=NULL";
 }
 
-void Utility::loadQml(QUrl url)
-{
-    if(engine)
-        engine->load (url);
-}
-
-void Utility::downloadImage(QJSValue callbackFun, QUrl url, QString savePath, QString saveName)
+void Utility::downloadImage(QScriptValue callbackFun, QUrl url, QString savePath, QString saveName)
 {
     download_image->getImage (callbackFun, url, savePath, saveName);
 }
@@ -218,12 +196,12 @@ void Utility::httpPost(QObject *caller, QByteArray slotName, QUrl url, QByteArra
     http_request->post (caller, slotName, url, data, highRequest);
 }
 
-void Utility::httpGet(QJSValue callbackFun, QUrl url, bool highRequest)
+void Utility::httpGet(QScriptValue callbackFun, QUrl url, bool highRequest)
 {
     http_request->get (callbackFun, url, highRequest);
 }
 
-void Utility::httpPost(QJSValue callbackFun, QUrl url, QByteArray data, bool highRequest)
+void Utility::httpPost(QScriptValue callbackFun, QUrl url, QByteArray data, bool highRequest)
 {
     http_request->post (callbackFun, url, data, highRequest);
 }

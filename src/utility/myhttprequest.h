@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QtNetwork>
 #include <QQueue>
-#include <QJSValue>
+#include <QScriptValue>
 
 class NetworkAccessManager;
 class MyHttpRequest : public QObject
@@ -37,7 +37,7 @@ protected:
     };
     struct Data{
         ReplyType replyType;
-        QJSValue callbackFun;
+        QScriptValue callbackFun;
         QObject* caller;
         QByteArray slotName;
     };
@@ -50,7 +50,7 @@ protected:
     QQueue<requestData> queue_requestData;
     
     void send(QObject *caller, QByteArray slotName, QUrl url, QByteArray data="", bool highRequest=false );//highRequest记录是否为高级的网络请求
-    void send( QJSValue callbackFun, QUrl url, QByteArray data="", bool highRequest=false );
+    void send( QScriptValue callbackFun, QUrl url, QByteArray data="", bool highRequest=false );
 protected slots:
     virtual void finished( QNetworkReply *reply );
     void send();
@@ -59,8 +59,8 @@ signals:
 public slots:
     void get(QObject *caller, QByteArray slotName, QUrl url, bool highRequest=false );
     void post(QObject *caller, QByteArray slotName, QUrl url, QByteArray data="", bool highRequest=false );
-    void get(QJSValue callbackFun, QUrl url, bool highRequest=false );
-    void post(QJSValue callbackFun, QUrl url, QByteArray data="", bool highRequest=false );
+    void get(QScriptValue callbackFun, QUrl url, bool highRequest=false );
+    void post(QScriptValue callbackFun, QUrl url, QByteArray data="", bool highRequest=false );
     void abort();//取消当前网络请求
     QString errorString();
 };
@@ -69,7 +69,7 @@ class MyHttpRequestPrivate : public MyHttpRequest
 {
     Q_OBJECT
 private:
-    explicit MyHttpRequestPrivate(QNetworkRequest request, QJSValue callbackFun, QUrl url, QByteArray data);
+    explicit MyHttpRequestPrivate(QNetworkRequest request, QScriptValue callbackFun, QUrl url, QByteArray data);
     explicit MyHttpRequestPrivate(QNetworkRequest request, QObject *caller, QByteArray slotName, QUrl url, QByteArray data);
     friend class MyHttpRequest;
 private slots:

@@ -5,9 +5,9 @@
 #include <QDebug>
 #include <QByteArray>
 #include <QTimer>
+#include <QDeclarativeItem>
 #include "qqiteminfo.h"
 
-class MyWindow;
 class MyHttpRequest;
 class NetworkAccessManager;
 class QNetworkRequest;
@@ -18,10 +18,8 @@ class QQCommand : public FriendInfo
     Q_PROPERTY(QString userQQ READ userQQ WRITE setUserQQ NOTIFY userQQChanged)
     Q_PROPERTY(QString userPassword READ userPassword WRITE setUserPassword NOTIFY userPasswordChanged)
     Q_PROPERTY(LoginStatus loginStatus READ loginStatus WRITE setLoginStatus NOTIFY loginStatusChanged)
-    Q_PROPERTY(double windowScale READ windowScale WRITE setWindowScale NOTIFY windowScaleChanged)
     Q_PROPERTY(bool rememberPassword READ rememberPassword WRITE setRememberPassword NOTIFY rememberPasswordChanged)//是否记住密码
     Q_PROPERTY(bool autoLogin READ autoLogin WRITE setAutoLogin NOTIFY autoLoginChanged)//是否自动登录
-    Q_PROPERTY(QString codeText READ codeText CONSTANT)
     
     Q_ENUMS(States)
     Q_ENUMS(LoginStatus)
@@ -31,7 +29,7 @@ private:
     static QQCommand *firstQQCommand;
 public:
     static QQCommand *getFirstQQCommand();//返回第一个被创建的QQCommand对象
-    explicit QQCommand(QQuickItem *parent = 0);
+    explicit QQCommand( QObject *parent = 0);
     enum LoginStatus{//登录状态
         WaitLogin,//离线
         Logining,//登录中
@@ -67,16 +65,13 @@ public:
     LoginStatus loginStatus() const;
     QString userQQ() const;
     QString userPassword() const;
-    double windowScale() const;
     bool rememberPassword() const;
     bool autoLogin() const;
-    QString codeText() const;
     
 private slots:
     void beginPoll2();//启动心跳包
     void poll2Finished(QNetworkReply *replys);//qq心跳包获取完成时调用
     void initUserPassword();//初始化用户密码(从QSettings中)
-    void onChatMainWindowClose();//接收主聊天窗口关闭的信号
     void onSettingsChanged();//处理settings对象改变的信号
     void onStateChanged();//当状态改变后调用，将状态存到本地
     void onPoll2Timeout();//如果心跳包超时
@@ -99,7 +94,7 @@ private:
         QString filePath;//能获取图片真实下载地址的url地址
     };
     
-    QPointer<MyWindow> window_login, window_mainPanel;//记录登录窗口的指针
+    //QPointer<MyWindow> window_login, window_mainPanel;//记录登录窗口的指针
     LoginStatus m_loginStatus;//储存当前用户的登录状态
     QByteArray poll2_data;//post心跳包的数据
     NetworkAccessManager *manager;//储存管理心跳包网络请求的对象
@@ -107,15 +102,13 @@ private:
     QNetworkReply *reply;//储存进行网络请求的应答对象
     QString m_userQQ;//储存当前用户qq号码
     QString m_userPassword;//储存当前用户密码
-    QPointer<MyWindow> code_window;//储存指向输入验证码窗口的指针
-    QJSEngine *jsEngine;//储存加载了api(*.js文件)的js引擎
-    double m_windowScale;//储存可视控件的比例
-    QString m_codeText;//储存输入验证码
-    QPointer<MyWindow> warning_info_window;//储存指向警告窗口的指针
+    //QPointer<MyWindow> code_window;//储存指向输入验证码窗口的指针
+    QScriptEngine *jsEngine;//储存加载了api(*.js文件)的js引擎
+    //QPointer<MyWindow> warning_info_window;//储存指向警告窗口的指针
     QMap<QString, QQItemInfo*> map_itemInfo;//储存每个好友或群讨论组的Info
-    QPointer<MyWindow> mainChatWindowCommand;//储存所有聊天窗口的主管理窗口
-    QPointer<QQuickItem> mainChatWindowCommand_item;//储存每一个聊天页面的父对象(聊天窗口anchors.fill此父对象)
-    QMap<QString, QQuickItem*> map_chatPage;//储存备已经打开的聊天页面
+    //QPointer<MyWindow> mainChatWindowCommand;//储存所有聊天窗口的主管理窗口
+    QPointer<QDeclarativeItem> mainChatWindowCommand_item;//储存每一个聊天页面的父对象(聊天窗口anchors.fill此父对象)
+    QMap<QString, QDeclarativeItem*> map_chatPage;//储存备已经打开的聊天页面
     QString friendsUin;//用来储存所有好友的uin，陌生人不存在这里，为判断一个uin是否为陌生人做支持
     QTimer* poll2_timer;//心跳包的计时器，如果超时就中断当前心跳包，然后重新重新心跳
     QTimer* abortPoll_timer;//中断心跳包的定时器（为中断心跳包提供一个延时）
@@ -129,7 +122,7 @@ private:
     
 
     void loadApi();
-    QString disposeMessage(QJsonObject &obj , ChatMessageInfo *message_info);//解析基本消息
+    /*QString disposeMessage(QJsonObject &obj , ChatMessageInfo *message_info);//解析基本消息
     //void disposeInputNotify( QJsonObject &obj );//处理好友正在输入消息
     void disposeFriendStatusChanged( QJsonObject &obj );//处理好友状态改变
     void disposeFriendMessage( QJsonObject &obj, MessageType type=GeneralMessage );//处理好友消息
@@ -138,9 +131,9 @@ private:
     void disposeStrangerMessage( QJsonObject &obj, MessageType type=GeneralMessage );//处理陌生人消息
     void disposeSystemMessage(QJsonObject &obj);//处理系统消息
     //void disposeFileMessage( QJsonObject &obj );//处理文件传输方面的消息
-    //void disposeAvMessage( QJsonObject &obj, bool open/*true为开视频，false为取消开视频*/ );//处理视频聊天方面的消息
+    //void disposeAvMessage( QJsonObject &obj, bool open );//处理视频聊天方面的消息,true为开视频，false为取消开视频
     //void disposeShakeMessage( QJsonObject &obj );
-    QString doubleToString( QJsonObject &obj, const QString& name );//将obj中类型为double的数据转化为QString类型
+    QString doubleToString( QJsonObject &obj, const QString& name );//将obj中类型为double的数据转化为QString类型*/
     QString textToHtml(FontStyle &style, QString data);//将文本内容转化为富文本
     
     QQItemInfo* createQQItemInfo(const QString& uin ,const QString& typeString);
@@ -159,20 +152,16 @@ signals:
     void error( QString message );//有错误产生就发送信号
     void userPasswordChanged();
     
-    void windowScaleChanged();//窗口比例改变
     void rememberPasswordChanged();
     void autoLoginChanged();
 
     void friendInputNotify(QString fromUin);//好友正在输入的信号
     void newMessage(QString fromUin, int type, ChatMessageInfo* info);//新的聊天消息信号,qml中的聊天页面会接收此消息
     void shakeWindow(QString fromUin);//窗口抖动信号
-    void addChatPageToWindow(QQuickItem* item);//增加聊天页面的信号,此信号被聊天页面所在的window接收
-    void activeChatPageChanged(QQuickItem* item);//将item这个page变为活跃的page
+    //void addChatPageToWindow(QQuickItem* item);//增加聊天页面的信号,此信号被聊天页面所在的window接收
+    //void activeChatPageChanged(QQuickItem* item);//将item这个page变为活跃的page
     void addRecentContacts(QQItemInfo* info);//发送信号告诉qml的最近联系人列表添加item
 public slots:
-    void loadLoginWindow();//加载登录窗口
-    void loadMainPanelWindow();//加载qq主面板窗口
-    
     void setRememberPassword(bool arg);
     void setAutoLogin(bool arg);
     void saveUserPassword();
@@ -180,20 +169,14 @@ public slots:
     void startPoll2( const QByteArray& data );
     void setUserQQ(QString arg);
     void setUserPassword(QString arg);
-    void setWindowScale(double arg);
     
     QString getHash();//获取请求好友列表需要的hsah
     QString encryptionPassword(const QString &uin, const QString &code);//加密密码，用来登录
-    QVariant getLoginedQQInfo();//获取所有在此电脑上登录过的qq的信息
+    QString getLoginedQQInfo();//获取所有在此电脑上登录过的qq的信息
     void removeLoginedQQInfo(const QString account, bool rmLocalCache=false);//移除qq号码为account的账号信息
     void addLoginedQQInfo(const QString account, const QString nick);//增加一个登录过的qq的记录
     
-    int openMessageBox( QJSValue value );//打开一个对话窗口
-    void showWarningInfo(QString message);//显示一个警告窗口
-    void downloadImage( int senderType/*QQItemType类型*/, QUrl url, QString account, QString imageSize, QJSValue callbackFun );//下载图片
-    void showCodeWindow(const QJSValue callbackFun, const QString code_uin);//显示出输入验证码的窗口
-    void closeCodeWindow();//关闭输入验证码的窗口
-    void updataCode();//刷新验证码的显示
+    void downloadImage( int senderType/*QQItemType类型*/, QUrl url, QString account, QString imageSize, QScriptValue callbackFun );//下载图片
     void updataApi(const QString& content);//重新载入api.js，用于更新api后的操作
     
     FriendInfo* createFriendInfo(const QString uin);//创建一个储存好友信息的对象
@@ -209,10 +192,10 @@ public slots:
     
     QVariant value(const QString & key, const QVariant & defaultValue = QVariant()) const;//返回储存在QSettings里边的value;
     void setValue(const QString & key, const QVariant & value);
-    void shakeChatMainWindow (QQuickItem *item);//抖动聊天窗口
     void openSqlDatabase();//打开数据库（储存聊天记录等消息）
     
-    void closeChatWindow();//关闭聊天窗口
     QString getMovieImageFrameCachePath();//返回给qml显示gif图时每一帧的缓存路径
+
+    friend class QQItemInfo;
 };
 #endif // QQCommand_H

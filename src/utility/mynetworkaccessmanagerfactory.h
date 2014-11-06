@@ -1,11 +1,11 @@
 #ifndef MYNETWORKACCESSMANAGERFACTORY_H
 #define MYNETWORKACCESSMANAGERFACTORY_H
 
-#include <QtQuick>
 #include <QtNetwork>
 #include <QSslConfiguration>
+#include <QDeclarativeNetworkAccessManagerFactory>
 
-class MyNetworkAccessManagerFactory : public QObject,public QQmlNetworkAccessManagerFactory
+class MyNetworkAccessManagerFactory : public QObject,public QDeclarativeNetworkAccessManagerFactory
 {
     Q_OBJECT
 public:

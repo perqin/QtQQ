@@ -3,45 +3,43 @@ TARGET = QtQQ
 VERSION = 0.0.1
 DEFINES += VER=\\\"$$VERSION\\\"
 
-QT += network webkit
+#TRANSLATIONS = 9store_zh_CN.ts
 
-#DEFINES += BUILDING_LIBCURL CURL_STATICLIB
+QT += network webkit svg sql script
 
 INCLUDEPATH += \
     src \
-    src/qxtglobalshortcut \
     src/qqstars \
     src/mywidgets \
-    src/utility
+    src/utility \
+    src/qjson
+#DEFINES += BUILDING_LIBCURL CURL_STATICLIB
 
-SOURCES += src/main.cpp \
+SOURCES += main.cpp \
     src/utility/mynetworkaccessmanagerfactory.cpp \
     src/utility/utility.cpp \
-    src/mywidgets/mywindow.cpp \
     src/qqstars/qqstars.cpp \
-    src/mywidgets/systemtrayicon.cpp \
     src/mywidgets/mysvgview.cpp \
     src/mywidgets/myimage.cpp \
-    src/mywidgets/mymessagebox.cpp \
     src/utility/myhttprequest.cpp \
     src/qqstars/qqiteminfo.cpp \
-    src/utility/downloadimage.cpp \
-    src/utility/texteditplaygif.cpp
-#    src/Qcurl.cpp
+    src/utility/downloadimage.cpp
 
 HEADERS += \
     src/utility/mynetworkaccessmanagerfactory.h \
     src/utility/utility.h \
-    src/mywidgets/mywindow.h \
     src/qqstars/qqstars.h \
-    src/mywidgets/systemtrayicon.h \
     src/mywidgets/mysvgview.h \
     src/mywidgets/myimage.h \
-    src/mywidgets/mymessagebox.h \
     src/utility/myhttprequest.h \
     src/qqstars/qqiteminfo.h \
-    src/utility/downloadimage.h \
-    src/utility/texteditplaygif.h
+    src/utility/downloadimage.h
+#SOURCES += main.cpp \
+#    src/Fileopt.cpp \
+#    src/Qcurl.cpp
+
+#HEADERS += \
+#    src/Fileopt.h \
 #    src/Qcurl.h
 
 #include(curl-7.37.0/lib/curl.pri)
@@ -56,8 +54,12 @@ HEADERS += \
 #folder_Symbian3.source = qml/symbian3
 #folder_Symbian3.target = qml
 
-folder_Symbian1.source = qml/symbian1
-folder_Symbian1.target = qml
+folder_Symbian1.source = qml
+folder_Symbian1.target = ./
+
+faces.source = faces
+faces.target = ./
+DEPLOYMENTFOLDERS += faces
 
 #folder_pic.source = qml/pic
 #folder_pic.target = qml
@@ -88,12 +90,12 @@ simulator{
 
 symbian{
     #DEPLOYMENTFOLDERS = folder_Pic    -- for common resources
-    #contains(QT_VERSION, 4.7.3){
+    contains(QT_VERSION, 4.7.3){
         DEFINES += Q_OS_S60V5
         DEPLOYMENTFOLDERS += folder_Symbian1
-    #} else {
-    #    DEPLOYMENTFOLDERS += folder_Symbian3
-    #}
+    } else {
+        DEPLOYMENTFOLDERS += folder_Symbian3
+    }
     vendorinfo = "%{\"Perqin\"}" ":\"Perqin\""
     my_deployment.pkg_prerules += vendorinfo
     DEPLOYMENT += my_deployment
@@ -104,8 +106,21 @@ symbian{
 
     DEFINES -= VER=\\\"$$VERSION\\\"
     DEFINES += VER=\"$$VERSION\"
+    #addFiles.sources = 9store_zh_CN.qm
+    #addFiles.path = .
+    #DEPLOYMENT += addFiles
 }
 
 # Please do not modify the following two lines. Required for deployment.
 include(qmlapplicationviewer/qmlapplicationviewer.pri)
 qtcAddDeployment()
+
+OTHER_FILES += \
+    qml/QQItemInfo/GroupInfo.qml \
+    qml/QQItemInfo/FriendInfo.qml \
+    qml/QQItemInfo/DiscuInfo.qml \
+    qml/Api/api.js \
+    qml/Api/QQApi.qml \
+    qml/symbian1/main.qml
+
+RESOURCES +=

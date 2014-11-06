@@ -1,10 +1,10 @@
 #ifndef MYSVGVIEW_H
 #define MYSVGVIEW_H
 
-#include <QQuickPaintedItem>
 #include <QSvgRenderer>
+#include <QDeclarativeItem>
 
-class MySvgView : public QQuickPaintedItem
+class MySvgView : public QDeclarativeItem
 {
     Q_OBJECT
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
@@ -15,7 +15,7 @@ class MySvgView : public QQuickPaintedItem
     
     void setDefaultSize( QSize arg );
 public:
-    explicit MySvgView(QQuickItem *parent = 0);
+    explicit MySvgView(QDeclarativeItem *parent = 0);
     QUrl source() const;
     QSize defaultSize() const;
 

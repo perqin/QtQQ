@@ -6,7 +6,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QImage>
-#include <QJSValue>
+#include <QScriptValue>
 #include <QUrl>
 
 class MyHttpRequest;
@@ -26,7 +26,7 @@ private:
     };
     struct Data{
         ReplyType replyType;
-        QJSValue callbackFun;
+        QScriptValue callbackFun;
         QObject* caller;
         QByteArray slotName;
         QString savePath;
@@ -37,7 +37,7 @@ private:
 private slots:
     void downloadFinished(QNetworkReply *replys);//当图片下载完成的时候调用
 public slots:
-    void getImage(QJSValue callbackFun, QUrl url, QString savePath, QString saveName);
+    void getImage(QScriptValue callbackFun, QUrl url, QString savePath, QString saveName);
     void getImage(QObject *caller, QByteArray slotName, QUrl url, QString savePath, QString saveName);
 };
 

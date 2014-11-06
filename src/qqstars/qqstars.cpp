@@ -1,10 +1,8 @@
 #include "qqstars.h"
 #include "utility.h"
-#include <QJsonDocument>
 #include <QSettings>
-#include "mywindow.h"
+#include <QScriptEngine>
 #include "myhttprequest.h"
-#include "mymessagebox.h"
 #include "mynetworkaccessmanagerfactory.h"
 
 QQCommand *QQCommand::firstQQCommand = NULL;
@@ -13,12 +11,13 @@ QQCommand *QQCommand::getFirstQQCommand()
     return firstQQCommand;
 }
 
-QQCommand::QQCommand(QQuickItem *parent) :
+QQCommand::QQCommand( QObject *parent) :
     FriendInfo(parent)
 {
     if(firstQQCommand==NULL)
         firstQQCommand = this;
-    connect (this, &FriendInfo::stateChanged, this, &QQCommand::onStateChanged);
+
+    connect (this, SIGNAL(stateChanged(States)), SLOT(onStateChanged()));
     
     Utility *utility=Utility::createUtilityClass ();
     int temp1 = utility->value ("proxyType", QNetworkProxy::NoProxy).toInt ();
@@ -30,10 +29,9 @@ QQCommand::QQCommand(QQuickItem *parent) :
     
     setUserQQ (utility->value ("mainqq","").toString ());
     m_loginStatus = WaitLogin;//当前为离线(还未登录)
-    m_windowScale = 1;//缺省窗口比例为1
     chatImageID = 0;//初始化为0
     
-    request = new QNetworkRequest;
+    request = new QNetworkRequest();
     request->setUrl (QUrl("http://d.web2.qq.com/channel/poll2"));
     request->setRawHeader ("Origin", "http://d.web2.qq.com");
     request->setRawHeader ("Accept", "*/*");
@@ -44,16 +42,16 @@ QQCommand::QQCommand(QQuickItem *parent) :
     manager = new NetworkAccessManager(this);
     connect (manager, SIGNAL(finished(QNetworkReply*)), SLOT(poll2Finished(QNetworkReply*)));
     
-    jsEngine = new QJSEngine();//此对象用来加载js文件（为qq提供api）
+    jsEngine = new QScriptEngine();//此对象用来加载js文件（为qq提供api）
     loadApi ();//加载api的js文件
     
     reply = NULL;
     poll2Timerout_count=0;//记录网络请求的连续超时次数
     poll2Error_count=0;//记录网络请求连续出错的次数
-    connect (utility, &Utility::networkOnlineStateChanged, this, &QQCommand::onNetworkOnlineStateChanged);
+    connect (utility, SIGNAL(networkOnlineStateChanged(bool)), SLOT(onNetworkOnlineStateChanged(bool)));
     poll2_timer = new QTimer(this);
     poll2_timer->setSingleShot (true);//设置为单发射器
-    connect (poll2_timer, &QTimer::timeout, this, &QQCommand::onPoll2Timeout);
+    connect (poll2_timer, SIGNAL(timeout()), SLOT(onPoll2Timeout()));
     abortPoll_timer = new QTimer(this);
     abortPoll_timer->setSingleShot (true);//设置为单发射器
     
@@ -70,11 +68,6 @@ QQCommand::LoginStatus QQCommand::loginStatus() const
 QString QQCommand::userPassword() const
 {
     return m_userPassword;
-}
-
-double QQCommand::windowScale() const
-{
-    return m_windowScale;
 }
 
 QString QQCommand::userQQ() const
@@ -96,28 +89,20 @@ bool QQCommand::autoLogin() const
     return false;
 }
 
-QString QQCommand::codeText() const
-{
-    if(code_window){
-        return code_window->property ("code").toString ();
-    }
-    return "";
-}
-
 void QQCommand::beginPoll2()
 {
-    disconnect (abortPoll_timer, &QTimer::timeout, reply, &QNetworkReply::abort);
+    disconnect (abortPoll_timer, SIGNAL(timeout()), reply, SIGNAL(aboutToClose()));
     //qDebug()<<"reply1:"<<reply;
     reply=manager->post (*request, poll2_data);
     //qDebug()<<"reply2:"<<reply;
-    connect (abortPoll_timer, &QTimer::timeout, reply, &QNetworkReply::abort);
+    connect (abortPoll_timer, SIGNAL(timeout()), reply, SIGNAL(aboutToClose()));
     poll2_timer->start (100000);//网络请求超时定时器
 }
 
 void QQCommand::poll2Finished(QNetworkReply *replys)
 {
     poll2_timer->stop ();//停止计算请求是否超时的计时器
-    if(replys->error ()==QNetworkReply::NoError) {
+    /*if(replys->error ()==QNetworkReply::NoError) {
         QByteArray array = replys->readAll ();
         emit poll2ReData (array);
         QJsonParseError json_error;
@@ -190,7 +175,7 @@ void QQCommand::poll2Finished(QNetworkReply *replys)
             QMetaObject::invokeMethod (this, "reLogin");//调用槽reLogin重新登录（在qml中定义）
         }else
             beginPoll2();//重新post
-    }
+    }*/
 }
 
 void QQCommand::initUserPassword()
@@ -199,25 +184,6 @@ void QQCommand::initUserPassword()
         QString pass=mysettings->value ("password", "").toString ();
         setUserPassword (Utility::createUtilityClass ()->stringUncrypt (pass, "xingchenQQ"));
     }
-}
-
-void QQCommand::onChatMainWindowClose()//如果主聊天窗口关闭，那就销毁所有已经建立的聊天页面
-{
-    foreach (QQuickItem *item, map_chatPage) {
-        if(item!=NULL){
-            QString key = map_chatPage.key (item);
-            QString uin,typeStr;
-            for(int i=0;i<key.length ();++i){
-                if(key[i].isNumber ()){
-                    uin = key.mid (i);
-                    typeStr = key.mid (0,i);
-                    break;
-                }
-            }
-            item->deleteLater ();//销毁此页面
-        }
-    }
-    map_chatPage.clear ();//清空所有对象
 }
 
 void QQCommand::onSettingsChanged()
@@ -327,13 +293,13 @@ void QQCommand::loadApi()
     QString fileName = "qml/Api/api.js";
     QFile scriptFile(fileName);
     if (!scriptFile.open(QIODevice::ReadOnly))
-        qDebug()<<"QQCommand:打开"+fileName+"失败";
+        qDebug()<<QString::fromUtf8("QQCommand:打开")+fileName+QString::fromUtf8("失败")<<scriptFile.errorString();
     QString contents = scriptFile.readAll ();
     scriptFile.close();
     jsEngine->evaluate(contents, fileName);
 }
 
-QString QQCommand::disposeMessage(QJsonObject &obj, ChatMessageInfo* message_info)
+/*QString QQCommand::disposeMessage(QJsonObject &obj, ChatMessageInfo* message_info)
 {
     QString result;
     FontStyle font_style;
@@ -406,7 +372,7 @@ QString QQCommand::disposeMessage(QJsonObject &obj, ChatMessageInfo* message_inf
                     faceName.append (".png");
                 else
                     faceName.append (".gif");
-                QString data = "<img widht=\"25\" height=\"25\" src=\"qrc:/faces/classic/"+faceName+"\">";
+                QString data = "<img widht=\"25\" height=\"25\" src=\"./faces/classic/"+faceName+"\">";
                 //qDebug()<<data;
                 result.append (data);//添加纯文本消息
                 //qDebug()<<"表情消息,"<<"表情代码："<<array[1].toInt ();
@@ -486,13 +452,13 @@ void QQCommand::disposeFriendMessage(QJsonObject &obj, QQCommand::MessageType ty
         emit friendInputNotify (from_uin);//发送好友正在输入的信号
         break;
     case FileMessage:{
-        /*QString mode = obj["mode"].toString ();
+        QString mode = obj["mode"].toString ();
         if( mode=="recv" ){
             QString file_name = obj["name"].toString ();
             emit messageArrive (Friend, from_uin, "{\"content\":[{\"type\":"+QString::number (FileMessage)+",\"flag\":1,\"name\":\""+file_name+"\"}]}");
         }else{
             emit messageArrive (Friend, from_uin, "{\"content\":[{\"type\":"+QString::number (FileMessage)+",\"flag\":0}]}");
-        }*/
+        }
         break;
     }
     case AvRequest:
@@ -577,12 +543,12 @@ void QQCommand::disposeDiscuMessage(QJsonObject &obj, QQCommand::MessageType typ
 
 void QQCommand::disposeStrangerMessage(QJsonObject &, QQCommand::MessageType )
 {
-    /*QString from_uin = doubleToString (obj, "from_uin");
+    QString from_uin = doubleToString (obj, "from_uin");
     QString msg_id = doubleToString (obj, "msg_id");
     QString msg_id2 = doubleToString (obj, "msg_id2");
     QString msg_type = doubleToString (obj, "msg_type");
     QString reply_ip = doubleToString (obj, "reply_ip");
-    QString to_uin = doubleToString (obj, "to_uin");*/
+    QString to_uin = doubleToString (obj, "to_uin");
     
 }
 
@@ -607,7 +573,7 @@ void QQCommand::disposeSystemMessage(QJsonObject &obj)
     }
 }
 
-/*void QQCommand::disposeFileMessage(QJsonObject &obj)
+void QQCommand::disposeFileMessage(QJsonObject &obj)
 {
     QString from_uin = doubleToString (obj, "from_uin");
     QString mode = obj["mode"].toString ();
@@ -629,7 +595,7 @@ void QQCommand::disposeShakeMessage(QJsonObject &obj)
 {
     QString from_uin = doubleToString (obj, "from_uin");
     emit messageArrive (Friend, from_uin, "{\"content\":[{\"type\":"+QString::number (ShakeWindow)+"}]}");
-}*/
+}
 
 QString QQCommand::doubleToString(QJsonObject &obj, const QString &name)
 {
@@ -639,7 +605,7 @@ QString QQCommand::doubleToString(QJsonObject &obj, const QString &name)
             return QString::number ((quint64)obj[name].toDouble ());
     }
     return name;
-}
+}*/
 
 QString QQCommand::textToHtml(QQCommand::FontStyle &style, QString data)
 {
@@ -695,8 +661,8 @@ QQItemInfo *QQCommand::createQQItemInfo(const QString& uin, const QString& typeS
         QQItemInfo* info = qobject_cast<QQItemInfo*>(map_itemInfo[name]);
         return info;
     }
-    QQmlEngine *engine = Utility::createUtilityClass ()->qmlEngine ();
-    QQmlComponent component(engine, "./qml/QQItemInfo/"+typeString+"Info.qml");
+    QDeclarativeEngine *engine = Utility::createUtilityClass ()->qmlEngine ();
+    QDeclarativeComponent component(engine, "./qml/QQItemInfo/"+typeString+"Info.qml");
     QQItemInfo* info = qobject_cast<QQItemInfo*>(component.create ());
     if(info!=NULL){
         map_itemInfo[name] = info;
@@ -714,17 +680,13 @@ void QQCommand::setLoginStatus(QQCommand::LoginStatus arg)
         if(arg == WaitLogin){//如果登录状态变为离线
             poll2_timer->stop ();//停止计算请求是否超时的计时器
             reply->abort ();//停止心跳包
-            closeChatWindow();//关闭和好友聊天的窗口
+            //closeChatWindow();//关闭和好友聊天的窗口
             clearQQItemInfos();//清空所有的好友信息
             chatImageID = 0;//chatImageID回到缺省值
             map_imageUrl.clear ();//情况image的id和url值对
-            if(!window_mainPanel.isNull ())//销毁主面板窗口
-                window_mainPanel->deleteLater ();
-            loadLoginWindow();//打开登录窗口
+
         }else if(arg == LoginFinished){//如果登录完成
-            if(!window_login.isNull ())//关闭聊天窗口
-                window_login->deleteLater ();
-            loadMainPanelWindow ();//加载主面板窗口
+
         }
         emit loginStatusChanged();
     }
@@ -757,66 +719,11 @@ void QQCommand::setUserPassword(QString arg)
     }
 }
 
-void QQCommand::showWarningInfo(QString message)
-{
-    QQmlEngine *engine = Utility::createUtilityClass ()->qmlEngine ();
-    if(warning_info_window){
-        warning_info_window->show ();
-    }else{
-        QQmlComponent component(engine, "./qml/Utility/MyMessageBox.qml");
-        QObject *obj = component.create ();
-        warning_info_window = qobject_cast<MyWindow*>(obj);
-        if(obj)
-            obj->setProperty ("text", QVariant(message));
-        else
-            qDebug()<<"创建MyMessageBox.qml失败";
-    }
-}
-
-void QQCommand::downloadImage(int senderType, QUrl url, QString account, QString imageSize, QJSValue callbackFun)
+void QQCommand::downloadImage(int senderType, QUrl url, QString account, QString imageSize, QScriptValue callbackFun)
 {
     QString path = QQItemInfo::localCachePath ((QQItemInfo::QQItemType)senderType, userQQ(), account);
     //先获取此qq为account，类型为senderType的缓存目录，将此目录传给下载图片的函数。此图片下载完成就会存入此路径
     Utility::createUtilityClass ()->downloadImage (callbackFun, url, path, "avatar-"+imageSize);
-}
-
-void QQCommand::showCodeWindow(const QJSValue callbackFun, const QString code_uin)
-{
-    QQmlEngine *engine = Utility::createUtilityClass ()->qmlEngine ();
-    if(!code_window){
-        QQmlComponent component(engine, "./qml/Utility/CodeInput.qml");
-        QObject *obj = component.create ();
-        if(obj){
-            code_window = qobject_cast<MyWindow*>(obj);
-        }else{
-            qDebug()<<"创建CodeInput.qml失败";
-            return;
-        }
-    }
-    //qDebug()<<"显示验证码"<<code_uin<<code_window;
-    if(code_window){
-        QJSValue value = engine->newQObject (code_window);
-        if(value.isObject ())
-            value.setProperty ("backFun", callbackFun);
-        QString url = "https://ssl.captcha.qq.com/getimage?aid=1003903&r=0.9101365606766194&uin="+userQQ()+"&cap_cd="+code_uin;
-        code_window->setProperty ("source", url);
-        code_window->show ();
-    }
-}
-
-void QQCommand::closeCodeWindow()
-{
-    if(code_window){
-        code_window->close ();
-        code_window->deleteLater ();
-    }
-}
-
-void QQCommand::updataCode()
-{
-    if(code_window){
-        QMetaObject::invokeMethod (code_window, "updateCode");//调用刷新验证码
-    }
 }
 
 FriendInfo* QQCommand::createFriendInfo(const QString uin)
@@ -839,7 +746,7 @@ DiscuInfo* QQCommand::createDiscuInfo(const QString uin)
 
 void QQCommand::addChatPage(QString uin, int senderType)
 {
-    if(uin==""||senderType<0)
+    /*if(uin==""||senderType<0)
         return;
     QString typeStr = QQItemInfo::typeToString ((QQItemInfo::QQItemType)senderType);//获取此类型的字符串表达形式
     
@@ -887,12 +794,12 @@ void QQCommand::addChatPage(QString uin, int senderType)
     }else{
         qDebug()<<"创建"+qmlName+"出错";
     }
-    mainChatWindowCommand->show ();//显示出聊天窗口
+    mainChatWindowCommand->show ();//显示出聊天窗口*/
 }
 
 void QQCommand::removeChatPage(QString uin, int senderType)
 {
-    QQItemInfo::QQItemType type = (QQItemInfo::QQItemType)senderType;
+    /*QQItemInfo::QQItemType type = (QQItemInfo::QQItemType)senderType;
     QString typeStr = QQItemInfo::typeToString (type);//获取此类型的字符串表达形式
     QQuickItem *item = map_chatPage.value (typeStr+uin, NULL);
     if(item!=NULL){
@@ -912,7 +819,7 @@ void QQCommand::removeChatPage(QString uin, int senderType)
             map_chatPage.remove (key);//如果对象已经为空则移除此对象
             qDebug()<<key+"为NULL，已被销毁";
         }
-    }
+    }*/
 }
 
 QVariant QQCommand::value(const QString &key, const QVariant &defaultValue) const
@@ -925,25 +832,9 @@ void QQCommand::setValue(const QString &key, const QVariant &value)
     mysettings->setValue (key, value);
 }
 
-void QQCommand::shakeChatMainWindow(QQuickItem *item)
-{
-    emit activeChatPageChanged (item);
-    if(QMetaObject::invokeMethod (mainChatWindowCommand, "windowShake")){
-        qDebug()<<"窗口抖动成功";
-    }else{
-        qDebug()<<"窗口抖动失败";
-    }
-}
-
 void QQCommand::openSqlDatabase()
 {
     FriendInfo::openSqlDatabase (userQQ());//打开数据库
-}
-
-void QQCommand::closeChatWindow()
-{
-    if(!mainChatWindowCommand.isNull ())
-        mainChatWindowCommand->close ();
 }
 
 QString QQCommand::getMovieImageFrameCachePath()
@@ -1007,36 +898,6 @@ void QQCommand::setImageUrlById(int image_id, const QString &url)
     map_imageUrl[image_id]=url;
 }
 
-void QQCommand::loadLoginWindow()
-{
-    if(window_login.isNull ()){
-        QQmlEngine *engine = Utility::createUtilityClass ()->qmlEngine ();
-        QQmlComponent component(engine, "./qml/Login/main.qml");
-        QObject *temp_obj = component.create ();
-        window_login = qobject_cast<MyWindow*>(temp_obj);
-        if(window_login.isNull ()){
-            qDebug()<<"QQCommand:加载登录窗口失败,"<<component.errorString ();
-        }
-    }else{
-        window_login->show ();
-    }
-}
-
-void QQCommand::loadMainPanelWindow()
-{
-    if(window_mainPanel.isNull ()){
-        QQmlEngine *engine = Utility::createUtilityClass ()->qmlEngine ();
-        QQmlComponent component(engine, "./qml/MainPanel/main.qml");
-        QObject *temp_obj = component.create ();
-        window_login = qobject_cast<MyWindow*>(temp_obj);
-        if(window_login.isNull ()){
-            qDebug()<<"QQCommand:加载主面板窗口失败,"<<component.errorString ();
-        }
-    }else{
-        window_mainPanel->show ();
-    }
-}
-
 bool QQCommand::isChatPageExist(const QString& uin, int senderType)
 {
     QString typeStr = QQItemInfo::typeToString ((QQItemInfo::QQItemType)senderType);//获取此类型的字符串表达形式
@@ -1056,19 +917,22 @@ bool QQCommand::isStranger(const QString &uin)
 
 QString QQCommand::getHash()
 {
-    QJSValueList list;
-    list<<QJSValue(userQQ())<<QJSValue(Utility::createUtilityClass ()->getCookie ("ptwebqq"));
-    return jsEngine->globalObject ().property ("getHash").call (list).toString ();
+    QScriptValueList list;
+    list<<QScriptValue(userQQ())<<QScriptValue(Utility::createUtilityClass ()->getCookie ("ptwebqq"));
+    return jsEngine->globalObject ().property ("getHash").call (QScriptValue(), list).toString ();
 }
 
 QString QQCommand::encryptionPassword(const QString &uin, const QString &code)
 {
-    QJSValueList list;
-    list<<QJSValue(userPassword())<<QJSValue(uin)<<QJSValue(code);
-    return jsEngine->globalObject ().property ("encryptionPassword").call (list).toString ();
+    qDebug()<<QString::fromUtf8("QQCommand:调用了加密密码的函数");
+    QScriptValueList list;
+    list<<QScriptValue(userPassword())<<QScriptValue(uin)<<QScriptValue(code);
+    QString result = jsEngine->globalObject ().property ("encryptionPassword").call (QScriptValue(), list).toString ();
+    qDebug()<<QString::fromUtf8("加密后的密码为：")<<result;
+    return result;
 }
 
-QVariant QQCommand::getLoginedQQInfo()
+QString QQCommand::getLoginedQQInfo()
 {
     Utility *utility = Utility::createUtilityClass ();
     QByteArray reply="[";
@@ -1089,7 +953,7 @@ QVariant QQCommand::getLoginedQQInfo()
         }
     }
     reply.replace (reply.size ()-1,1,"]");
-    return QVariant(QJsonDocument::fromJson (reply).array ());
+    return reply;
 }
 
 void QQCommand::removeLoginedQQInfo(const QString account, bool rmLocalCache)
@@ -1127,53 +991,6 @@ void QQCommand::addLoginedQQInfo(const QString account, const QString nick)
         qqs.insert (0, addStr);
         utility->setValue ("qq_account", qqs);//添加进去
     }
-}
-
-void QQCommand::setWindowScale(double arg)
-{
-    if (m_windowScale != arg) {
-        m_windowScale = arg;
-        emit windowScaleChanged();
-    }
-}
-
-int QQCommand::openMessageBox(QJSValue value)
-{
-    MyMessageBox message;
-    message.setStyleSource (QUrl::fromLocalFile ("style/messageBoxStyle.css"));
-    QJSValue temp = value.property ("icon");
-    if( !temp.isUndefined () ){
-        message.setIcon ((MyMessageBox::Icon)temp.toInt ());
-    }
-    temp = value.property ("detailedText");
-    if( !temp.isUndefined () ) {
-        message.setDetailedText (temp.toString ());
-    }
-    temp = value.property ("standardButtons");
-    if( !temp.isUndefined () ) {
-        message.setStandardButtons ((MyMessageBox::StandardButtons)temp.toInt ());
-    }
-    temp = value.property ("text");
-    if( !temp.isUndefined () ) {
-        message.setText (temp.toString ());
-    }
-    temp = value.property ("iconPixmap");
-    if( !temp.isUndefined () ) {
-        message.setIconPixmap (QPixmap(temp.toString ()));
-    }
-    temp = value.property ("textFormat");
-    if( !temp.isUndefined () ) {
-        message.setTextFormat ((Qt::TextFormat)temp.toInt ());
-    }
-    temp = value.property ("informativeText");
-    if( !temp.isUndefined () ) {
-        message.setInformativeText (temp.toString ());
-    }
-    temp = value.property ("textInteractionFlags");
-    if( !temp.isUndefined () ) {
-        message.setTextInteractionFlags ((Qt::TextInteractionFlags)temp.toInt ());
-    }
-    return message.exec ();
 }
 
 void QQCommand::setRememberPassword(bool arg)
