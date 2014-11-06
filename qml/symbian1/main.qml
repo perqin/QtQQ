@@ -38,19 +38,13 @@ Rectangle {
         id: field_account
         anchors.centerIn: parent
         implicitWidth: parent.width*2/3
-        onTextChanged: {
-            myqq.userQQ = text
-        }
     }
     TextField{
-        id: fileld_password
+        id: field_password
         anchors.horizontalCenter: field_account.horizontalCenter
         anchors.top: field_account.bottom
         anchors.topMargin: 10
         implicitWidth: field_account.implicitWidth
-        onTextChanged: {
-            myqq.userPassword = text
-        }
     }
 
     Button{
@@ -59,9 +53,12 @@ Rectangle {
         anchors.topMargin: 20
         text: "    登  录    "
         onClicked: {
-            if(myqq.userQQ==""||myqq.userPassword=="")
+            if(field_account.text==""||field_password.text=="")
                 return
 
+            myqq.userQQ = field_account.text
+            //设置userqq之后，c++端会自动将配置和缓存目录改到此用户下，所以设置myqq.userQQ要谨慎，一半是确定用户要登录此账户后才设置，如按下登录按钮
+            myqq.userPassword = field_password.text
             myqq.loginStatus = QQ.Logining//登录状态设置为登录中
             myqq.checkAccount(testQQFinished)//先检测qq号是否需要验证码
         }
