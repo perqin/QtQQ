@@ -22,6 +22,12 @@ qrc_*.cpp
 ui_*.h
 Makefile*
 *-build-*
+*.pkg
+*.cache
+*.mmp
+*.rss
+*.BAT
+*.inf
 
 # QtCreator
 

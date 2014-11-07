@@ -34,8 +34,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QmlApplicationViewer viewer;
     viewer.setOrientation(QmlApplicationViewer::ScreenOrientationAuto);
 
+    //给qml设置网络请求所用的类
     QDeclarativeEngine *engine = viewer.engine();
-    engine->setNetworkAccessManagerFactory (new MyNetworkAccessManagerFactory());//给qml设置网络请求所用的类
+    engine->setNetworkAccessManagerFactory (new MyNetworkAccessManagerFactory());
 
     Utility *utility=Utility::createUtilityClass ();
     QNetworkRequest* request = utility->getHttpRequest ()->getNetworkRequest ();

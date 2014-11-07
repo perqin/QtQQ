@@ -1,7 +1,94 @@
 import QtQuick 1.0
 import QQItemInfo 1.0
 import com.nokia.symbian 1.0
+//import com.nokia.extras 1.0
+//import "Component"
+import "../js/main.js" as Script
 
+PageStackWindow {
+    id: app;
+
+    initialPage: MainPage {
+        id: mainPage;
+    }
+
+    SettingsCenter {
+        id: settingsCenter;
+    }
+
+    SignalCenter {
+        id: signalCenter;
+    }
+
+    Constant {
+        id: constant;
+    }
+
+    ToolTip {
+        id: toolTip;
+        //platformInverted: tbsettings.whiteTheme;
+        visible: false;
+    }
+/*
+    showStatusBar: true;
+
+    initialPage: MainPage { id: mainPage; }
+
+    TBSettings { id: tbsettings; }
+
+
+    SignalCenter { id: signalCenter; }
+
+    StatusPaneText { id: statusPaneText; }
+
+    InfoCenter { id: infoCenter; }
+
+    AudioWrapper { id: audioWrapper; }
+
+    WorkerScript {
+        id: worker;
+        property bool running: false;
+        source: "../js/WorkerScript.js";
+        onMessage: running = messageObject.running;
+    }
+
+    ImageUploader {
+        id: imageUploader;
+        property variant caller: null;
+        function signForm(params){
+            return Script.BaiduRequest.generateSignature(params);
+        }
+        function jsonParse(data){
+            return JSON.parse(data);
+        }
+        uploader: HttpUploader {}
+        onUploadFinished: signalCenter.imageUploadFinished(caller, result);
+    }
+
+    HttpUploader {
+        id: uploader;
+        property variant caller: null;
+        onUploadStateChanged: Script.uploadStateChanged();
+    }
+
+    AudioRecorder {
+        id: recorder;
+        outputLocation: utility.tempPath+"/audio.amr";
+    }
+
+
+    InfoBanner {
+        id: infoBanner;
+        iconSource: "gfx/error.svg";
+        //platformInverted: tbsettings.whiteTheme;
+    }
+
+*/
+    //Component.onCompleted: Script.initialize(signalCenter, tbsettings, utility, worker, uploader, imageUploader);
+    Component.onCompleted: Script.initialize(signalCenter, settingsCenter);
+}
+
+/*
 Rectangle {
     width: 360
     height: 640
@@ -22,7 +109,7 @@ Rectangle {
                 utility.consoleLog("需要输入验证码")
                 var url = "https://ssl.captcha.qq.com/getimage?aid=1003903&r=0.9101365606766194&uin="+myqq.userQQ+"&cap_cd="+uin
                 image_code.source = url
-                /*此处需要去获取验证码*/
+                /*此处需要去获取验证码*//*
             }
         }
     }
@@ -49,7 +136,7 @@ Rectangle {
 
     Button{
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: fileld_password.bottom
+        anchors.top: field_password.bottom
         anchors.topMargin: 20
         text: "    登  录    "
         onClicked: {
@@ -64,3 +151,4 @@ Rectangle {
         }
     }
 }
+*/

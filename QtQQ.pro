@@ -3,8 +3,6 @@ TARGET = QtQQ
 VERSION = 0.0.1
 DEFINES += VER=\\\"$$VERSION\\\"
 
-#TRANSLATIONS = 9store_zh_CN.ts
-
 QT += network webkit svg sql script
 
 INCLUDEPATH += \
@@ -34,7 +32,6 @@ HEADERS += \
     src/utility/myhttprequest.h \
     src/qqstars/qqiteminfo.h \
     src/utility/downloadimage.h
-#SOURCES += main.cpp \
 #    src/Fileopt.cpp \
 #    src/Qcurl.cpp
 
@@ -54,24 +51,23 @@ HEADERS += \
 #folder_Symbian3.source = qml/symbian3
 #folder_Symbian3.target = qml
 
-folder_Symbian1.source = qml
-folder_Symbian1.target = ./
+folder_Symbian1.source = qml/symbian1
+folder_Symbian1.target = qml
 
-faces.source = faces
-faces.target = ./
-DEPLOYMENTFOLDERS += faces
+folder_Faces.source = qml/faces
+folder_Faces.target = qml
 
-#folder_pic.source = qml/pic
-#folder_pic.target = qml
+folder_Pics.source = qml/pics
+folder_Pics.target = qml
 
-#folder_JS.source = qml/JavaScript
-#folder_JS.target = qml
+folder_JS.source = qml/js
+folder_JS.target = qml
 
 # Additional import path used to resolve QML modules in Creator's code model
 QML_IMPORT_PATH =
 
 simulator{
-    DEPLOYMENTFOLDERS += folder_Symbian1
+    DEPLOYMENTFOLDERS += folder_Symbian1 folder_JS folder_Faces folder_Pics
 }
 
 #contains(MEEGO_EDITION,harmattan){
@@ -89,7 +85,7 @@ simulator{
 #}
 
 symbian{
-    #DEPLOYMENTFOLDERS = folder_Pic    -- for common resources
+    DEPLOYMENTFOLDERS = folder_JS folder_Faces folder_Pics
     contains(QT_VERSION, 4.7.3){
         DEFINES += Q_OS_S60V5
         DEPLOYMENTFOLDERS += folder_Symbian1
@@ -106,9 +102,6 @@ symbian{
 
     DEFINES -= VER=\\\"$$VERSION\\\"
     DEFINES += VER=\"$$VERSION\"
-    #addFiles.sources = 9store_zh_CN.qm
-    #addFiles.path = .
-    #DEPLOYMENT += addFiles
 }
 
 # Please do not modify the following two lines. Required for deployment.
@@ -121,6 +114,6 @@ OTHER_FILES += \
     qml/QQItemInfo/DiscuInfo.qml \
     qml/Api/api.js \
     qml/Api/QQApi.qml \
-    qml/symbian1/main.qml
+#    qml/symbian1/main.qml
 
 RESOURCES +=
