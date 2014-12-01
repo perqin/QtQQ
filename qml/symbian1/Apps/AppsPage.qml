@@ -1,38 +1,122 @@
 import QtQuick 1.0
 import com.nokia.symbian 1.0
-import "Component"
+import "../Component"
 //import "Silica"
-import "../js/main.js" as Script
+//import "../js/main.js" as Script
 
 MyPage {
     id: page;
 
-    objectName: "MainPage";
+    objectName: "AppsPage";
 
-/*
-    property bool forceRefresh: false;
-
-    loadingVisible: loading && view.count === 0;
-*/
-    title: qsTr("Message");
+    title: qsTr("Apps");
     tools: mainTools;
 
-    Connections {
+    /*Connections {
         target: signalCenter;
         onLoginFail: signalCenter.relogin();
-    }
+    }*/
 
     Header {
-        avatar: "../pics/user.png";
+        id: header;
+        avatar: "../../pics/user.png";
         nickname: "Perqin";
         signature: "Hello world!";
-        stateIcon: "../pics/user.png";
+        stateIcon: "../../pics/user.png";
         ToolButtonWithTip {
             id: clearMessageButton;
-            toolTipText: qsTr("Clear message");
-            iconSource: "toolbar-delete";
+            toolTipText: qsTr("Search");
+            iconSource: "toolbar-search";
+            anchors.right: parent.paddingItem.right;
+            anchors.verticalCenter: parent.verticalCenter;
         }
     }
+    Flickable {
+        anchors.top: header.bottom;
+        anchors.left: header.left;
+        anchors.right: header.right;
+        anchors.bottom: parent.bottom;
+        contentHeight: appsColumn.height;
+        contentWidth: width;
+        Column {
+            id: appsColumn;
+            width: parent.width;
+            AppsListHeading {
+                title: qsTr("Search");
+            }
+            ListItem {
+                ListItemText {
+                    mode: parent.mode;
+                    role: "Title";
+                    text: qsTr("Search for nearby people");
+                    anchors.left: parent.paddingItem.left;
+                    anchors.verticalCenter: parent.paddingItem.verticalCenter;
+                }
+            }
+            ListItem {
+                ListItemText {
+                    mode: parent.mode;
+                    role: "Title";
+                    text: qsTr("Search for people you may know");
+                    anchors.left: parent.paddingItem.left;
+                    anchors.verticalCenter: parent.paddingItem.verticalCenter;
+                }
+            }
+            AppsListHeading {
+                title: qsTr("Add");
+            }
+            ListItem {
+                ListItemText {
+                    mode: parent.mode;
+                    role: "Title";
+                    text: qsTr("Add QQ friend");
+                    anchors.left: parent.paddingItem.left;
+                    anchors.verticalCenter: parent.paddingItem.verticalCenter;
+                }
+            }
+            ListItem {
+                ListItemText {
+                    mode: parent.mode;
+                    role: "Title";
+                    text: qsTr("Join in QQ group");
+                    anchors.left: parent.paddingItem.left;
+                    anchors.verticalCenter: parent.paddingItem.verticalCenter;
+                }
+            }
+            AppsListHeading {
+                title: qsTr("Network");
+            }
+            ListItem {
+                ListItemText {
+                    mode: parent.mode;
+                    role: "Title";
+                    text: qsTr("Qzone message");
+                    anchors.left: parent.paddingItem.left;
+                    anchors.verticalCenter: parent.paddingItem.verticalCenter;
+                }
+            }
+            ListItem {
+                ListItemText {
+                    mode: parent.mode;
+                    role: "Title";
+                    text: qsTr("At me");
+                    anchors.left: parent.paddingItem.left;
+                    anchors.verticalCenter: parent.paddingItem.verticalCenter;
+                }
+            }
+            ListItem {
+                ListItemText {
+                    mode: parent.mode;
+                    role: "Title";
+                    text: qsTr("Unread mails");
+                    anchors.left: parent.paddingItem.left;
+                    anchors.verticalCenter: parent.paddingItem.verticalCenter;
+                }
+            }
+
+        }
+    }
+
 
 /*
     Connections {

@@ -1,12 +1,55 @@
 import QtQuick 1.0
 import QQItemInfo 1.0
 import com.nokia.symbian 1.0
-//import com.nokia.extras 1.0
-//import "Component"
+import com.nokia.extras 1.0
+import "Component"
 import "../js/main.js" as Script
 
 PageStackWindow {
     id: app;
+
+    ToolBarLayout {
+        id: mainTools;
+        ToolButtonWithTip {
+            id: messageButton;
+            toolTipText: qsTr("Message");
+            iconSource: "../pics/tem.svg";
+            onClicked: {
+                signalCenter.showMessage(qsTr("Press again to quit"));
+                //pageStack.replace(Qt.resolvedUrl(".qml"));
+            }
+            /*Bubble {
+                anchors.verticalCenter: parent.top;
+                anchors.horizontalCenter: parent.horizontalCenter;
+                text: {
+                    var n = 0;
+                    if (tbsettings.remindAtme) n += infoCenter.atme;
+                    if (tbsettings.remindPletter) n += infoCenter.pletter;
+                    if (tbsettings.remindReplyme) n += infoCenter.replyme;
+                    return n>0 ? n : "";
+                }
+                visible: text != "";
+            }*/
+        }
+        ToolButtonWithTip {
+            toolTipText: qsTr("Contact");
+            iconSource: "../pics/tem.svg";
+            //onClicked: pageStack.push(Qt.resolvedUrl(".qml"));
+        }
+        ToolButtonWithTip {
+            toolTipText: qsTr("Apps");
+            iconSource: "../pics/tem.svg";
+            onClicked: {
+                if (pageStack.currentPage.objectName != "AppsPage")
+                    pageStack.push(Qt.resolvedUrl("Apps/AppsPage.qml"));
+            }
+        }
+        ToolButtonWithTip {
+            toolTipText: qsTr("Menu");
+            iconSource: "toolbar-menu";
+            //onClicked: pageStack.push(Qt.resolvedUrl("MorePage.qml"));
+        }
+    }
 
     initialPage: MainPage {
         id: mainPage;
@@ -24,6 +67,12 @@ PageStackWindow {
         id: constant;
     }
 
+    InfoBanner {
+        id: infoBanner;
+        iconSource: "../pics/error.svg";
+        //platformInverted: tbsettings.whiteTheme;
+    }
+
     ToolTip {
         id: toolTip;
         //platformInverted: tbsettings.whiteTheme;
@@ -31,13 +80,6 @@ PageStackWindow {
     }
 /*
     showStatusBar: true;
-
-    initialPage: MainPage { id: mainPage; }
-
-    TBSettings { id: tbsettings; }
-
-
-    SignalCenter { id: signalCenter; }
 
     StatusPaneText { id: statusPaneText; }
 
@@ -77,11 +119,6 @@ PageStackWindow {
     }
 
 
-    InfoBanner {
-        id: infoBanner;
-        iconSource: "gfx/error.svg";
-        //platformInverted: tbsettings.whiteTheme;
-    }
 
 */
     //Component.onCompleted: Script.initialize(signalCenter, tbsettings, utility, worker, uploader, imageUploader);

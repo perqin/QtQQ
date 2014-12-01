@@ -63,6 +63,10 @@ MyPage {
         ToolButton {
             text: qsTr("Login");
             anchors.right: parent.right;
+            onClicked: {
+                //for test ui
+                pageStack.pop();
+            }
         }
         Item {
             id: checkRow;
